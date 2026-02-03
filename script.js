@@ -20,43 +20,38 @@ let lastGestureTime = 0;
 
 // ---------------- PARTICLE ----------------
 class Particle {
-  constructor(radius, angle, color){
+  constructor(radius, angle, color) {
     this.radius = radius;
     this.angle = angle;
     this.color = color || `hsl(${Math.random()*360},80%,70%)`;
     this.x = cx() + Math.cos(angle)*radius;
     this.y = cy() + Math.sin(angle)*radius;
-    this.prevX = this.x;
-    this.prevY = this.y;
     this.tx = this.x;
     this.ty = this.y;
     this.size = Math.random()*2 + 1;
     this.speed = 0.002 + Math.random()*0.003;
   }
-  update(){
-    this.prevX = this.x;
-    this.prevY = this.y;
 
-    if(mode==="planet"){
+  update() {
+    if(mode==="planet") {
+      // spiral orbit toward black hole vibe
       this.angle += this.speed;
-      this.radius -= 0.015; // spiral inward
-      if(this.radius < 40) this.radius = 140 + Math.random()*40;
+      this.radius -= 0.02; // slowly spiral inward
+      if(this.radius < 40) this.radius = 140 + Math.random()*30; // reset outer
       this.x = cx() + Math.cos(this.angle)*this.radius;
       this.y = cy() + Math.sin(this.angle)*this.radius;
-    } else if(mode==="text"){
+    } else if(mode==="text") {
       this.x += (this.tx - this.x)*0.08;
       this.y += (this.ty - this.y)*0.08;
     }
   }
-  draw(){
-    // glow trail
-    ctx.strokeStyle = this.color;
+
+  draw() {
+    ctx.fillStyle = this.color;
     ctx.globalAlpha = 0.4 + Math.random()*0.6;
-    ctx.lineWidth = this.size;
     ctx.beginPath();
-    ctx.moveTo(this.prevX,this.prevY);
-    ctx.lineTo(this.x,this.y);
-    ctx.stroke();
+    ctx.arc(this.x,this.y,this.size,0,Math.PI*2);
+    ctx.fill();
     ctx.globalAlpha = 1;
   }
 }
@@ -87,7 +82,7 @@ function initPlanet(){
   particles = [];
   for(let i=0;i<900;i++){
     const angle = Math.random()*Math.PI*2;
-    const radius = 60 + Math.random()*80;
+    const radius = 60 + Math.random()*80; // orbit around black hole
     particles.push(new Particle(radius,angle));
   }
 }
@@ -111,7 +106,7 @@ function morphToText(text){
   textTargets = [];
   for(let y=0;y<temp.height;y+=6){
     for(let x=0;x<temp.width;x+=6){
-      const idx = (y*temp.width+x)*4+3;
+      const idx = (y*temp.width + x)*4 + 3;
       if(data[idx]>150) textTargets.push({x,y});
     }
   }
@@ -122,15 +117,16 @@ function morphToText(text){
     p.ty = t.y;
   });
 
+  // generate extra stars
   extraStars = [];
-  for(let i=0;i<100;i++){
+  for(let i=0;i<80;i++){
     const t = textTargets[Math.floor(Math.random()*textTargets.length)];
     extraStars.push(new Star(t.x,t.y));
   }
 
   mode = "text";
 
-  setTimeout(()=>{mode="planet";initPlanet();},4000);
+  setTimeout(()=>{mode="planet"; initPlanet();},4000);
 }
 
 // ---------------- GESTURE DETECTION ----------------
@@ -169,9 +165,7 @@ cameraMP.start();
 
 // ---------------- ANIMATION ----------------
 function animate(){
-  // semi-transparent black to create trail effect
-  ctx.fillStyle = "rgba(0,0,0,0.15)";
-  ctx.fillRect(0,0,canvas.width,canvas.height);
+  ctx.clearRect(0,0,canvas.width,canvas.height);
 
   // black hole core
   const grad = ctx.createRadialGradient(cx(),cy(),20,cx(),cy(),70);
